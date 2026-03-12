@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 12:21:40 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/12 14:51:38 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/12 15:11:58 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,6 +73,19 @@
 		}
 
 		return (*(unsigned char *)s1 - *(unsigned char *)s2);
+	}
+
+#pragma endregion
+
+#pragma region "MEMSET"
+
+	void *ft_memset(void *b, int c, int len) {
+		unsigned char *p = b;
+
+		while (len--)
+			*p++ = (unsigned char)c;
+
+		return (b);
 	}
 
 #pragma endregion
