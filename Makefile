@@ -6,7 +6,7 @@
 #    By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/09 12:29:11 by vzurera-          #+#    #+#              #
-#    Updated: 2026/03/11 14:11:32 by vzurera-         ###   ########.fr        #
+#    Updated: 2026/03/12 12:27:49 by vzurera-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -44,7 +44,7 @@ NAME		= ft_script
 # ─────────── #
 
 CC			= clang
-CFLAGS		= -Wall -Wextra -Werror -O2
+CFLAGS		= -Wall -Wextra -Werror
 
 # ───────────────── #
 # ── DIRECTORIES ── #
@@ -59,7 +59,9 @@ SRC_DIR		= src/
 # ── FILES ── #
 # ─────────── #
 
-SRCS		= main.c
+SRCS		= main.c				\
+			  options.c				\
+			  utils/str.c
 
 # ───────────────────────────────────────────────────────────── #
 # ─────────────────────────── RULES ─────────────────────────── #

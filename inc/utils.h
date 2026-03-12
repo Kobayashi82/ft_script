@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   script.h                                           :+:      :+:    :+:   */
+/*   utils.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/11 14:09:50 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/12 13:12:27 by vzurera-         ###   ########.fr       */
+/*   Created: 2026/03/12 12:21:57 by vzurera-          #+#    #+#             */
+/*   Updated: 2026/03/12 14:51:47 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,24 +14,15 @@
 
 #pragma region "Includes"
 
-	#include "options.h"
-
-#pragma endregion
-
-#pragma region "Structures"
-
-	typedef struct s_script {
-		t_options	options;
-	} t_script;
-
-#pragma endregion
-
-#pragma region "Variables"
-
+	#include <unistd.h>
 
 #pragma endregion
 
 #pragma region "Methods"
 
+	size_t	ft_strlen(const char *str);
+	int		ft_strlcpy(char *dst, const char *src, size_t dstsize);
+	char	*ft_strchr(const char *s, int c);
+	int		ft_strcmp(const char *s1, const char *s2);
 
 #pragma endregion

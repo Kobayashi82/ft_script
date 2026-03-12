@@ -6,13 +6,14 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/11 14:09:39 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/11 14:09:40 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/12 14:05:30 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma region "Includes"
 
 	#include "script.h"
+	#include "options.h"
 
 #pragma endregion
 
@@ -23,11 +24,13 @@
 
 #pragma region "Main"
 
-	int main(int argc, char **argv) {
-		(void) argc;
-		(void) argv;
+	int main(int argc, const char **argv) {
+		t_script script;
 
-		return (0);
+		int ret = 0;
+		if ((ret = options_parse(&script.options, argc, argv))) return (ret - 1);
+
+		return (ret);
 	}
 
 #pragma endregion
