@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 12:21:40 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/14 15:10:59 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/14 19:09:42 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,6 +136,33 @@
 
 		*result = value;
 		return (0);
+	}
+
+#pragma endregion
+
+#pragma region "ITOA BUFFERED"
+
+	void itoa_buffered(int number, char *buffer) {
+		char	digits[12];
+		int		i = 0;
+
+		if (number == 0) {
+			buffer[0] = '0';
+			buffer[1] = '\0';
+			return;
+		}
+
+		while (number > 0) {
+			digits[i++] = '0' + (number % 10);
+			number /= 10;
+		}
+
+		int tmp = 0;
+		while (tmp < i) {
+			buffer[tmp] = digits[i - tmp - 1];
+			tmp++;
+		}
+		buffer[tmp] = '\0';
 	}
 
 #pragma endregion

@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/11 14:09:50 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/14 18:16:02 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/14 19:11:20 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,10 +66,10 @@
 #pragma region "Methods"
 
 	int		parse_options(int argc, char **argv);
-
 	int		shell_start();
+	void	shell_close();
 	void	signal_set();
-
+	int		select_loop();
 	int		raw_mode_enable();
 	void	raw_mode_disable();
 

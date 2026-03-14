@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/14 11:33:12 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/14 17:48:01 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/14 19:11:15 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,38 +14,28 @@
 
 	#include "script.h"
 
-	#include <sys/wait.h>						// close(), fork(), setsid(), setgid(), setuid(), dup2(), chdir(), execvp()
 	#include <sys/ioctl.h>						// ioctl()
 	#include <fcntl.h>							// open()
 
 #pragma endregion
 
-	static void	int_to_str(int n, char *buf)
-	{
-		int		i;
-		int		tmp;
-		char	digits[12];
+#pragma region "Get PTY Name"
 
-		i = 0;
-		if (n == 0) { buf[0] = '0'; buf[1] = '\0'; return ; }
-		while (n > 0) { digits[i++] = '0' + (n % 10); n /= 10; }
-		tmp = 0;
-		while (tmp < i) { buf[tmp] = digits[i - tmp - 1]; tmp++; }
-		buf[tmp] = '\0';
-	}
+	static int	get_pty_name(int master_fd, char *pty_name, size_t size) {
+		int		pty_fd;
+		char	buffer[12];
 
-	static int	get_pty_name(int master_fd, char *pty_name, size_t size)
-	{
-		int		ptyno;
-		char	num[12];
-
-		if (ioctl(master_fd, TIOCGPTN, &ptyno) == -1)
-			return (1);
-		int_to_str(ptyno, num);
+		if (ioctl(master_fd, TIOCGPTN, &pty_fd) == -1) return (1);
+		itoa_buffered(pty_fd, buffer);
 		ft_strlcpy(pty_name, "/dev/pts/", size);
-		ft_strlcpy(pty_name + 9, num, size - 9);
+		ft_strlcpy(pty_name + 9, buffer, size - 9);
+
 		return (0);
 	}
+
+#pragma endregion
+
+#pragma region "Start"
 
 	int shell_start() {
 		script.master_fd = open("/dev/ptmx", O_RDWR | O_NOCTTY);
@@ -134,3 +124,13 @@
 
 		return (0);
 	}
+
+#pragma endregion
+
+#pragma region "Close"
+
+	void shell_close() {
+		
+	}
+
+#pragma endregion

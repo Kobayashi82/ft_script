@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 12:21:57 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/14 15:11:08 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/14 19:09:46 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,5 +28,6 @@
 	void	*ft_memset(void *b, int c, int len);
 	int		ft_isspace(int c);
 	int		ft_atos(const char *str, size_t *result);
+	void	itoa_buffered(int number, char *buffer);
 
 #pragma endregion
