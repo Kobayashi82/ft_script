@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 12:14:27 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/14 11:57:38 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/14 17:44:44 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,7 +93,7 @@
 
 		#pragma region "Next Arg"
 
-			static int next_arg(char opt, const char **argv, int *i) {
+			static int next_arg(char opt, char **argv, int *i) {
 				(*i)++;
 				if (!argv[*i]) {
 					char tmp[2] = { opt, '\0' };
@@ -110,7 +110,7 @@
 
 		#pragma region "Set Echo"
 
-			static int set_echo(char opt, const char **argv, int *i, char *dst) {
+			static int set_echo(char opt, char **argv, int *i, char *dst) {
 				if (next_arg(opt, argv, i)) return (2);
 				ft_strlcpy(dst, argv[*i], sizeof(dst));
 
@@ -128,7 +128,7 @@
 
 		#pragma region "Set Format"
 
-			static int set_format(char opt, const char **argv, int *i, char *dst) {
+			static int set_format(char opt, char **argv, int *i, char *dst) {
 				if (next_arg(opt, argv, i)) return (2);
 				ft_strlcpy(dst, argv[*i], sizeof(dst));
 
@@ -146,7 +146,7 @@
 
 		#pragma region "Set Size"
 
-			static int set_size(char opt, const char **argv, int *i, size_t *dst) {
+			static int set_size(char opt, char **argv, int *i, size_t *dst) {
 				if (next_arg(opt, argv, i)) return (2);
 
 				int ret = ft_atos(argv[*i], dst);
@@ -166,7 +166,7 @@
 
 		#pragma region "Set Value"
 
-			static int set_value(char opt, const char **argv, int *i, char *dst, int *log_dst) {
+			static int set_value(char opt, char **argv, int *i, char *dst, int *log_dst) {
 				*log_dst = 1;
 				if (next_arg(opt, argv, i)) return (2);
 				ft_strlcpy(dst, argv[*i], sizeof(dst));
@@ -180,13 +180,13 @@
 
 	#pragma region "Process"
 
-		static int process_option(t_options *options, const char **argv, int *i) {
+		static int process_option(t_options *options, char **argv, int *i) {
 			char opt = argv[*i][1];
 			switch (opt) {
 				case 'I':	return (set_value(opt, argv, i, options->in, &options->log_in));
 				case 'O':	return (set_value(opt, argv, i, options->out, &options->log_out));
 				case 'B':	return (set_value(opt, argv, i, options->io, &options->log_io));
-				case 'T':	return (set_value(opt, argv, i, options->timing, &options->log_timing));
+				case 'T':	return (set_value(opt, argv, i, options->time, &options->log_time));
 				case 'c':	return (set_value(opt, argv, i, options->command, &options->log_command));
 				case 'E':	return (set_echo(opt, argv, i, options->echo));
 				case 'm':	return (set_format(opt, argv, i, options->format));
@@ -222,7 +222,7 @@
 
 	#pragma region "Parse"
 
-		int parse_options(int argc, const char **argv) {
+		int parse_options(int argc, char **argv) {
 			t_options *options = &script.options;
 			int	ret = 0;
 			int	parse = 1;

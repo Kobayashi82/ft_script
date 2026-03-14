@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 12:21:40 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/14 11:35:07 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/14 15:10:59 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,6 +73,24 @@
 		}
 
 		return (*(unsigned char *)s1 - *(unsigned char *)s2);
+	}
+
+	int ft_strncmp(const char *s1, const char *s2, int n) {
+		unsigned char	*str1;
+		unsigned char	*str2;
+		int				i;
+
+		if (!s1 || !s2) return (-1);
+		str1 = (unsigned char *)s1;
+		str2 = (unsigned char *)s2;
+		i = 0;
+		while (*str1 && (*str1 == *str2) && i < n && n > 0) {
+			++str1;
+			++str2;
+			++i;
+		}
+		if ((!*str1 && !*str2) || i == n) return (0);
+		return (*str1 - *str2);
 	}
 
 #pragma endregion

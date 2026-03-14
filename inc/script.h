@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/11 14:09:50 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/14 12:01:18 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/14 18:16:02 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,8 +29,8 @@
 		int		log_out;
 		char	io[4096];
 		int		log_io;
-		char	timing[4096];
-		int		log_timing;
+		char	time[4096];
+		int		log_time;
 		char	command[4096];
 		int		log_command;
 		char	echo[256];
@@ -44,6 +44,9 @@
 
 	typedef struct s_script {
 		t_options		options;
+		int				signal;					// 
+		char			*env[256];				// Environment variables
+		char			*shell_path;			// Path for the shell
 		int				shell_pid;				// PID of the shell process
 		int				shell_running;			// Flag indicating if shell is running
 		int				master_fd;				// Master FD of the shell terminal
@@ -62,7 +65,10 @@
 
 #pragma region "Methods"
 
-	int		parse_options(int argc, const char **argv);
+	int		parse_options(int argc, char **argv);
+
+	int		shell_start();
+	void	signal_set();
 
 	int		raw_mode_enable();
 	void	raw_mode_disable();
