@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 12:21:57 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/12 15:12:09 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/14 10:40:38 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,5 +25,7 @@
 	char	*ft_strchr(const char *s, int c);
 	int		ft_strcmp(const char *s1, const char *s2);
 	void	*ft_memset(void *b, int c, int len);
+	int		ft_isspace(int c);
+	int		ft_atos(const char *str, size_t *result);
 
 #pragma endregion

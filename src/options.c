@@ -6,21 +6,20 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 12:14:27 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/12 14:54:53 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/14 11:57:38 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma region "Includes"
 
-	#include "options.h"
-	#include "utils.h"
+	#include "script.h"
 
 #pragma endregion
 
 #pragma region "Help"
 
 	static void help() {
-		char *msg =
+		const char *msg =
 			"Usage:\n"
 			" ft_script [options] [file]\n\n"
 
@@ -36,7 +35,6 @@
 			" -c <command>    run command rather than interactive shell\n"
 			" -e              return exit code of the child process\n"
 			" -f              run flush after each write\n"
-			" -F              use output file even when it is a link\n"
 			" -E <when>       echo input in session (auto, always or never)\n"
 			" -o <size>       terminate if output files exceed size\n"
 			" -q              be quiet\n"
@@ -76,7 +74,7 @@
 #pragma region "Version"
 
 	static void version() {
-		char *msg =
+		const char *msg =
 			"ft_script 1.0.\n"
 			"Copyright (C) 2026 Kobayashi Corp ⓒ.\n"
 			"This is free software: you are free to change and redistribute it.\n"
@@ -89,125 +87,168 @@
 
 #pragma endregion
 
-#pragma region "Parser"
+#pragma region "Options"
 
-	static int validate_command(const char *command) {
-		(void) command;
-		return (0);
-	}
+	#pragma region "Set"
 
-	static int validate_file(const char *file) {
-		(void) file;
-		return (0);
-	}
+		#pragma region "Next Arg"
 
-	static int next_arg(char opt, const char **argv, int *i) {
-		(*i)++;
-		if (!argv[*i]) {
-			char tmp[2] = { opt, '\0' };
-			write(STDERR_FILENO, "ft_script: option requires an argument -- '", 43);
-			write(STDERR_FILENO, tmp, 1);
-			write(STDERR_FILENO, "'\n", 2);
-			write(STDERR_FILENO, "Try 'ft_script -h' for more information.\n", 41);
-			return (1);
-		}
-
-		return (0);
-	}
-
-	static int process_option(t_options *options, const char **argv, int *i) {
-		char opt = argv[*i][1];
-		switch (opt) {
-			case 'I':
-				if (next_arg(opt, argv, i))				return (2);
-				ft_strlcpy(options->log_in, argv[*i], sizeof(options->log_in));
-				if (validate_file(options->log_in))		return (2);
-				return (0);
-			case 'O':
-				if (next_arg(opt, argv, i))				return (2);
-				ft_strlcpy(options->log_out, argv[*i], sizeof(options->log_out));
-				if (validate_file(options->log_in))		return (2);
-				return (0);
-			case 'B':
-				if (next_arg(opt, argv, i))				return (2);
-				ft_strlcpy(options->log_io, argv[*i], sizeof(options->log_io));
-				if (validate_file(options->log_in))		return (2);
-				return (0);
-			case 'T':
-				if (next_arg(opt, argv, i))				return (2);
-				ft_strlcpy(options->log_timing, argv[*i], sizeof(options->log_timing));
-				if (validate_file(options->log_in))		return (2);
-				return (0);
-			case 'm':
-				if (next_arg(opt, argv, i))				return (2);
-				ft_strlcpy(options->log_format, argv[*i], sizeof(options->log_format));
-				if (ft_strcmp(options->log_format, "classic") && ft_strcmp(options->log_format, "advanced")) {
-					write(STDERR_FILENO, "ft_script: unsupported logging format: '", 40);
-					write(STDERR_FILENO, options->log_format, ft_strlen(options->log_format));
-					write(STDERR_FILENO, "'\n", 2);
-					write(STDERR_FILENO, "Try 'ft_script -h' for more information.\n", 41);
-					return (2);
+			static int next_arg(char opt, const char **argv, int *i) {
+				(*i)++;
+				if (!argv[*i]) {
+					char tmp[2] = { opt, '\0' };
+					write(STDERR_FILENO, "ft_script: option requires an argument -- '", 43);
+					write(STDERR_FILENO, tmp, 1);
+					write(STDERR_FILENO, "'\nTry 'ft_script -h' for more information.\n", 43);
+					return (1);
 				}
+
 				return (0);
-			case 'a':	options->append = 1;			return (0);
-			case 'c':
-				if (next_arg(opt, argv, i)) 			return (2);
-				ft_strlcpy(options->command, argv[*i], sizeof(options->command));
-				if (validate_command(options->command))	return (2);
-				return (0);
-			case 'e':	options->ret = 1;				return (0);
-			case 'f':	options->flush = 1;				return (0);
-			case 'F':	options->force = 1;				return (0);
-			case 'E':
-				if (next_arg(opt, argv, i))				return (2);
-				ft_strlcpy(options->echo, argv[*i], sizeof(options->echo));
-				if (ft_strcmp(options->echo, "auto") && ft_strcmp(options->echo, "always") && ft_strcmp(options->echo, "never")) {
-					write(STDERR_FILENO, "ft_script: script: unssuported echo mode: '", 43);
-					write(STDERR_FILENO, options->echo, ft_strlen(options->echo));
-					write(STDERR_FILENO, "'\n", 2);
-					write(STDERR_FILENO, "Try 'ft_script -h' for more information.\n", 41);
-					return (2);
-				}
-				return (0);
-			case 'o':
-				if (next_arg(opt, argv, i))				return (2);
-				// options->size
-				// Validate
-				return (0);
-			case 'q':	options->quiet = 1;				return (0);
-			case 'h':	help();							return (1);
-			case 'V':	version();						return (1);
-		}
-
-		return (0);
-	}
-
-	static int is_option(const char *arg) {
-		if (!arg[0] || arg[0] != '-') 							return (0);
-		if (ft_strchr("IOBTmacefFEoqhV", arg[1]) && !arg[2])	return (1);
-		if (arg[1] == '-' && !arg[2])							return (-1);
-
-		write(STDERR_FILENO, "ft_script: invalid option -- '", 30);
-		write(STDERR_FILENO, arg + 1, ft_strlen(arg + 1));
-		write(STDERR_FILENO, "'\n", 2);
-		write(STDERR_FILENO, "Try 'ft_script -h' for more information.\n", 41);
-		return (2);
-	}
-
-	int options_parse(t_options *options, int argc, const char **argv) {
-		int ret = 0, parse = 1;
-
-		for (int i = 1; i < argc; ++i) {
-			if (parse && (ret = is_option(argv[i]))) {
-				if (ret == -1) { parse = ret = 0; continue; }
-				if (ret == 2 || (ret = process_option(options, argv, &i))) return (ret);
-			} else {
-				ft_strlcpy(options->file, argv[i], sizeof(options->file));
-				break;
 			}
+
+		#pragma endregion
+
+		#pragma region "Set Echo"
+
+			static int set_echo(char opt, const char **argv, int *i, char *dst) {
+				if (next_arg(opt, argv, i)) return (2);
+				ft_strlcpy(dst, argv[*i], sizeof(dst));
+
+				if (ft_strcmp(dst, "auto") && ft_strcmp(dst, "always") && ft_strcmp(dst, "never")) {
+					write(STDERR_FILENO, "ft_script: script: unssuported echo mode: '", 43);
+					write(STDERR_FILENO, dst, ft_strlen(dst));
+					write(STDERR_FILENO, "'\nTry 'ft_script -h' for more information.\n", 43);
+					return (2);
+				}
+
+				return (0);
+			}
+
+		#pragma endregion
+
+		#pragma region "Set Format"
+
+			static int set_format(char opt, const char **argv, int *i, char *dst) {
+				if (next_arg(opt, argv, i)) return (2);
+				ft_strlcpy(dst, argv[*i], sizeof(dst));
+
+				if (ft_strcmp(dst, "classic") && ft_strcmp(dst, "advanced")) {
+					write(STDERR_FILENO, "ft_script: unsupported logging format: '", 40);
+					write(STDERR_FILENO, dst, ft_strlen(dst));
+					write(STDERR_FILENO, "'\nTry 'ft_script -h' for more information.\n", 43);
+					return (2);
+				}
+
+				return (0);
+			}
+
+		#pragma endregion
+
+		#pragma region "Set Size"
+
+			static int set_size(char opt, const char **argv, int *i, size_t *dst) {
+				if (next_arg(opt, argv, i)) return (2);
+
+				int ret = ft_atos(argv[*i], dst);
+				if (ret) {
+					write(STDERR_FILENO, "ft_script: failed to parse output limit size: '", 47);
+					write(STDERR_FILENO, argv[*i], ft_strlen(argv[*i]));
+					if (ret == 2)	write(STDERR_FILENO, "': Numerical result out of range\n", 33);
+					else			write(STDERR_FILENO, "': Invalid argument\n", 20);
+					write(STDERR_FILENO, "Try 'ft_script -h' for more information.\n", 41);
+					return (2);
+				}
+
+				return (0);
+			}
+
+		#pragma endregion
+
+		#pragma region "Set Value"
+
+			static int set_value(char opt, const char **argv, int *i, char *dst, int *log_dst) {
+				*log_dst = 1;
+				if (next_arg(opt, argv, i)) return (2);
+				ft_strlcpy(dst, argv[*i], sizeof(dst));
+
+				return (0);
+			}
+
+		#pragma endregion
+
+	#pragma endregion
+
+	#pragma region "Process"
+
+		static int process_option(t_options *options, const char **argv, int *i) {
+			char opt = argv[*i][1];
+			switch (opt) {
+				case 'I':	return (set_value(opt, argv, i, options->in, &options->log_in));
+				case 'O':	return (set_value(opt, argv, i, options->out, &options->log_out));
+				case 'B':	return (set_value(opt, argv, i, options->io, &options->log_io));
+				case 'T':	return (set_value(opt, argv, i, options->timing, &options->log_timing));
+				case 'c':	return (set_value(opt, argv, i, options->command, &options->log_command));
+				case 'E':	return (set_echo(opt, argv, i, options->echo));
+				case 'm':	return (set_format(opt, argv, i, options->format));
+				case 'o':	return (set_size(opt, argv, i, &options->size));
+				case 'a':	options->append = 1;	return (0);
+				case 'e':	options->retur = 1;		return (0);
+				case 'f':	options->flush = 1;		return (0);
+				case 'q':	options->quiet = 1;		return (0);
+				case 'h':	help();					return (1);
+				case 'V':	version();				return (1);
+			}
+
+			return (0);
 		}
 
-		return (0);
-	}
+	#pragma endregion
+
+	#pragma region "Is Option"
+
+		static int is_option(const char *arg) {
+			if (!arg[0] || arg[0] != '-') 							return (0);
+			if (ft_strchr("IOBTmacefFEoqhV", arg[1]) && !arg[2])	return (1);
+			if (arg[1] == '-' && !arg[2])							return (-1);
+
+			write(STDERR_FILENO, "ft_script: invalid option -- '", 30);
+			write(STDERR_FILENO, arg + 1, ft_strlen(arg + 1));
+			write(STDERR_FILENO, "'\nTry 'ft_script -h' for more information.\n", 43);
+
+			return (2);
+		}
+
+	#pragma endregion
+
+	#pragma region "Parse"
+
+		int parse_options(int argc, const char **argv) {
+			t_options *options = &script.options;
+			int	ret = 0;
+			int	parse = 1;
+
+			ft_strlcpy(options->echo, "auto", sizeof(options->echo));
+			ft_strlcpy(options->format, "advanced", sizeof(options->echo));
+
+			for (int i = 1; i < argc; ++i) {
+				if (parse && (ret = is_option(argv[i]))) {
+					if (ret == -1) { parse = ret = 0; continue; }
+					if (ret == 2 || (ret = process_option(options, argv, &i))) return (ret);
+				} else {
+					if (options->log_in || options->log_out || options->log_io || i + 1 < argc) {
+						write(STDERR_FILENO, "ft_script: unexpected number of arguments\n", 42);
+						write(STDERR_FILENO, "Try 'ft_script -h' for more information.\n", 41);
+						return (2);
+					}
+					ft_strlcpy(options->out, argv[i], sizeof(options->out));
+					options->log_out = 1;
+					break;
+				}
+			}
+
+			return (0);
+		}
+
+	#pragma endregion
 
 #pragma endregion

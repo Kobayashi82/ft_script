@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   str.c                                              :+:      :+:    :+:   */
+/*   utils.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 12:21:40 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/12 15:11:58 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/14 11:35:07 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,6 +86,38 @@
 			*p++ = (unsigned char)c;
 
 		return (b);
+	}
+
+#pragma endregion
+
+#pragma region "ISSPACE"
+
+	int ft_isspace(int c) { return ((c >= 9 && c <= 13) || c == 32); }
+
+#pragma endregion
+
+#pragma region "ATOS"
+
+	int ft_atos(const char *str, size_t *result) {
+		size_t	value = 0;
+		int		i = 0;
+
+		if (!str) return (1);
+
+		while (ft_isspace(str[i])) i++;
+		if (str[i] == '+') i++;
+		if (!str[i]) return (1);
+
+		while (str[i]) {
+			if (str[i] < '0' || str[i] > '9')					return (1);
+			if (value > (((size_t)-1) - (str[i] - '0')) / 10)	return (2);
+
+			value = value * 10 + (str[i] - '0');
+			i++;
+		}
+
+		*result = value;
+		return (0);
 	}
 
 #pragma endregion
