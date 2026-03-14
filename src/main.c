@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/11 14:09:39 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/14 18:26:50 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/14 18:28:05 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,6 +86,8 @@
 			return (1);
 		}
 
+		// Mensaje de inicio
+
 		while (script.shell_running) {
 			FD_ZERO(&read_fds);
 			FD_SET(STDIN_FILENO, &read_fds);
@@ -120,6 +122,8 @@
 				}
 			}
 		}
+
+		// Mensaje de fin
 
 		if (script.shell_running) {
 			// Se ha salido con error
