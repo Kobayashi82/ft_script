@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 12:14:27 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/14 17:44:44 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/15 23:42:32 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,6 +83,43 @@
 			"Written by Kobayashi82 (vzurera-).\n";
 
 		write(STDOUT_FILENO, msg, ft_strlen(msg));
+	}
+
+#pragma endregion
+
+#pragma region "Environment"
+
+	static void set_env(char **env) {
+		int i = 0;
+		int found_shell = 0;
+		int found_term = 0;
+		for (; env[i] && i < 253; ++i) {
+			if (!found_shell && !ft_strncmp(env[i], "SHELL=", 6)) {
+				found_shell = 1;
+				if (access(env[i] + 6, X_OK)) {
+					g_script.env[i] = "SHELL=/bin/sh";
+					g_script.shell_path = g_script.env[i] + 6;
+					continue;
+				}
+				g_script.shell_path = env[i] + 6;
+			}
+			if (!found_term && !ft_strncmp(env[i], "TERM=", 5)) {
+				found_term = 1;
+				g_script.term = env[i] + 5;
+			}
+			g_script.env[i] = env[i];
+		}
+		if (!found_shell) {
+			g_script.env[i] = "SHELL=/bin/sh";
+			g_script.shell_path = g_script.env[i] + 6;
+			i++;
+		}
+		if (!found_term) {
+			g_script.env[i] = "TERM=xterm-256color";
+			g_script.term = g_script.env[i] + 5;
+			i++;
+		}
+		g_script.env[i] = NULL;
 	}
 
 #pragma endregion
@@ -185,7 +222,11 @@
 			switch (opt) {
 				case 'I':	return (set_value(opt, argv, i, options->in, &options->log_in));
 				case 'O':	return (set_value(opt, argv, i, options->out, &options->log_out));
-				case 'B':	return (set_value(opt, argv, i, options->io, &options->log_io));
+				case 'B': {
+							int ret = set_value(opt, argv, i, options->out, &options->log_out);
+							if (!ret) ft_strlcpy(options->in, options->out, sizeof(options->in));
+							return (ret);
+				}
 				case 'T':	return (set_value(opt, argv, i, options->time, &options->log_time));
 				case 'c':	return (set_value(opt, argv, i, options->command, &options->log_command));
 				case 'E':	return (set_echo(opt, argv, i, options->echo));
@@ -222,12 +263,12 @@
 
 	#pragma region "Parse"
 
-		int parse_options(int argc, char **argv) {
-			t_options *options = &script.options;
+		int parse_options(int argc, char **argv, char **env) {
+			t_options *options = &g_script.options;
 			int	ret = 0;
 			int	parse = 1;
 
-			ft_strlcpy(options->echo, "auto", sizeof(options->echo));
+			ft_strlcpy(options->echo,   "auto",     sizeof(options->echo));
 			ft_strlcpy(options->format, "advanced", sizeof(options->echo));
 
 			for (int i = 1; i < argc; ++i) {
@@ -235,7 +276,7 @@
 					if (ret == -1) { parse = ret = 0; continue; }
 					if (ret == 2 || (ret = process_option(options, argv, &i))) return (ret);
 				} else {
-					if (options->log_in || options->log_out || options->log_io || i + 1 < argc) {
+					if (options->log_in || options->log_out || i + 1 < argc) {
 						write(STDERR_FILENO, "ft_script: unexpected number of arguments\n", 42);
 						write(STDERR_FILENO, "Try 'ft_script -h' for more information.\n", 41);
 						return (2);
@@ -245,6 +286,13 @@
 					break;
 				}
 			}
+
+			if (!options->log_in && !options->log_out) {
+				ft_strlcpy(options->out, "typescript", sizeof(options->out));
+				options->log_out = 1;
+			}
+
+			set_env(env);
 
 			return (0);
 		}

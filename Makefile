@@ -6,7 +6,7 @@
 #    By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/09 12:29:11 by vzurera-          #+#    #+#              #
-#    Updated: 2026/03/15 19:00:30 by vzurera-         ###   ########.fr        #
+#    Updated: 2026/03/15 21:55:52 by vzurera-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -64,7 +64,6 @@ SRCS		= main.c			\
 			  signal.c			\
 			  terminal.c		\
 			  shell.c			\
-			  select.c			\
 			  file.c			\
 			  log.c				\
 			  utils.c			\

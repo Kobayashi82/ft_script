@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/14 11:33:12 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/15 19:12:18 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/15 23:14:28 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,11 +23,11 @@
 
 #pragma region "PTY Name"
 
-	static int pty_name(int master_fd, char *name, size_t size) {
+	static int pty_name(char *name, size_t size) {
 		int		pty_fd;
 		char	buffer[12];
 
-		if (ioctl(master_fd, TIOCGPTN, &pty_fd) == -1) return (1);
+		if (ioctl(g_script.master_fd, TIOCGPTN, &pty_fd) == -1) return (1);
 		itoa_buffered(pty_fd, buffer);
 		ft_strlcpy(name, "/dev/pts/", size);
 		ft_strlcpy(name + 9, buffer, size - 9);
@@ -40,26 +40,31 @@
 #pragma region "Start"
 
 	int shell_start() {
-		script.master_fd = open("/dev/ptmx", O_RDWR | O_NOCTTY);
-		if (script.master_fd == -1) {
-			// failed
-			return (1);
-		}
-		
-		int unlock = 0;
-		if (ioctl(script.master_fd, TIOCSPTLCK, &unlock) == -1) {
-			// failed
-			close(script.master_fd);
-			return (1);
-		}
-		
-		char name[256];
-		if (pty_name(script.master_fd, name, sizeof(name))) {
-			// failed
-			close(script.master_fd);
+		// Open PTY master
+		g_script.master_fd = open("/dev/ptmx", O_RDWR | O_NOCTTY);
+		if (g_script.master_fd == -1) {
+			write(STDERR_FILENO, "ft_script: failed to open PTY master\n", 37);
 			return (1);
 		}
 
+		// Unlock PTY slave so it can be opened
+		int unlock = 0;
+		if (ioctl(g_script.master_fd, TIOCSPTLCK, &unlock) == -1) {
+			write(STDERR_FILENO, "ft_script: failed to unlock PTY\n", 32);
+			close(g_script.master_fd);
+			return (1);
+		}
+
+		// Get PTY slave device name
+		char name[256];
+		if (pty_name(name, sizeof(name))) {
+			write(STDERR_FILENO, "ft_script: failed to get PTY slave name\n", 40);
+			close(g_script.master_fd);
+			return (1);
+		}
+		ft_strlcpy(g_script.tty, name, sizeof(g_script.tty));
+
+		// Get current terminal size
 		struct winsize ws;
 		if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) {
 			ws.ws_row = 24;
@@ -67,62 +72,111 @@
 			ws.ws_xpixel = 0;
 			ws.ws_ypixel = 0;
 		}
-		if (ioctl(script.master_fd, TIOCSWINSZ, &ws) == -1) {
-			// failed to set PTY window size
-			close(script.master_fd);
+		itoa_buffered(ws.ws_col, g_script.col);
+		itoa_buffered(ws.ws_row, g_script.row);
+
+		//  Apply terminal size to the PTY
+		if (ioctl(g_script.master_fd, TIOCSWINSZ, &ws) == -1) {
+			write(STDERR_FILENO, "ft_script: failed to set PTY window size\n", 41);
+			close(g_script.master_fd);
 			return (1);
 		}
 
+		// Create error pipe to detect child failures before execve
+		int err_pipe[2];
+		if (pipe(err_pipe) == -1) {
+			write(STDERR_FILENO, "ft_script: failed to create error pipe\n", 39);
+			close(g_script.master_fd);
+			return (1);
+		}
+
+		// Fork child process
 		pid_t pid = fork();
 		if (pid < 0) {
-			// fork() failed;
-			close(script.master_fd);
+			write(STDERR_FILENO, "ft_script: failed to fork process\n", 34);
+			close(g_script.master_fd);
+			close(err_pipe[0]);
+			close(err_pipe[1]);
 			return (1);
 		}
 
 		if (pid == 0) {
-			if (setsid() == -1) _exit(1);
+			// Close unneeded fds and mark error pipe as close-on-exec
+			close(g_script.master_fd);
+			close(err_pipe[0]);
+			fcntl(err_pipe[1], F_SETFD, FD_CLOEXEC);
 
-			script.slave_fd = open(name, O_RDWR);
-			if (script.slave_fd == -1) {
-				// open slave failed
+			// Create a new session so the PTY slave becomes the controlling terminal
+			if (setsid() == -1) {
+				write(err_pipe[1], "setsid failed\n", 14);
 				_exit(1);
 			}
 
-			ioctl(script.slave_fd, TIOCSCTTY, 0);
+			// Open PTY slave
+			g_script.slave_fd = open(name, O_RDWR);
+			if (g_script.slave_fd == -1) {
+				write(err_pipe[1], "open slave failed\n", 18);
+				_exit(1);
+			}
 
-			dup2(script.slave_fd, STDIN_FILENO);
-			dup2(script.slave_fd, STDOUT_FILENO);
-			dup2(script.slave_fd, STDERR_FILENO);
+			// Set PTY slave as controlling terminal
+			ioctl(g_script.slave_fd, TIOCSCTTY, 0);
 
+			// Redirect stdin, stdout and stderr to PTY slave
+			int ret = 0;
+			if (!ret && dup2(g_script.slave_fd, STDIN_FILENO)  == -1) ret = 1;
+			if (!ret && dup2(g_script.slave_fd, STDOUT_FILENO) == -1) ret = 1;
+			if (!ret && dup2(g_script.slave_fd, STDERR_FILENO) == -1) ret = 1;
+			if (ret) {
+				close(g_script.slave_fd);
+				write(err_pipe[1], "dup2 failed\n", 12);
+				_exit(1);
+			}
+
+			// Apply echo settings
 			struct termios term;
-			if (tcgetattr(script.slave_fd, &term) == 0) {
-				if		(!ft_strcmp(script.options.echo, "never"))		term.c_lflag &= ~ECHO;
-				else if (!ft_strcmp(script.options.echo, "always"))		term.c_lflag |= ECHO;
-				tcsetattr(script.slave_fd, TCSANOW, &term);
+			if (tcgetattr(g_script.slave_fd, &term) == 0) {
+				if		(!ft_strcmp(g_script.options.echo, "never"))  term.c_lflag &= ~ECHO;
+				else if (!ft_strcmp(g_script.options.echo, "always")) term.c_lflag |= ECHO;
+				tcsetattr(g_script.slave_fd, TCSANOW, &term);
 			}
+			close(g_script.slave_fd);
 
-			close(script.master_fd);
-			if (script.slave_fd > 2) {
-				close(script.slave_fd);
-			}
-
+			// Create arguments
 			char	*args[4];
 			int		argc = 0;
-			args[argc++] = script.shell_path;
-			if (script.options.log_command) {
+			args[argc++] = g_script.shell_path;
+			if (g_script.options.log_command) {
 				args[argc++] = "-c";
-				args[argc++] = script.options.command;
+				args[argc++] = g_script.options.command;
 			}
 			args[argc] = NULL;
 
-			execve(args[0], args, script.env);
-			// execve() failed
+			// Execute the shell
+			execve(args[0], args, g_script.env);
+
+			// In case of execve fail
+			write(err_pipe[1], "execve failed\n", 14);
 			_exit(1);
 		}
 
-		script.shell_pid = pid;
-		script.shell_running = 1;
+		// Wait until child closes pipe (execve success) or writes an error
+		char buffer[64];
+		ssize_t readed = read(err_pipe[0], buffer, sizeof(buffer) - 1);
+		close(err_pipe[0]);
+		close(err_pipe[1]);
+		if (readed > 0) {
+			buffer[readed] = '\0';
+			write(STDERR_FILENO, "ft_script: ", 11);
+			write(STDERR_FILENO, buffer, readed);
+			waitpid(pid, NULL, 0);
+			close(g_script.master_fd);
+			return (1);
+		}
+
+		// Store child PID and mark shell as running
+		g_script.shell_pid = pid;
+		g_script.shell_running = 1;
 
 		return (0);
 	}
@@ -132,22 +186,30 @@
 #pragma region "Close"
 
 	void shell_close() {
-		int	i, status;
+		struct timespec	ts;
+		int				status;
 
-		kill(script.shell_pid, SIGHUP);								// Ask shell to exit nicely
-		i = 0;
-		while (i < 10) {
-			usleep(10000);											// Wait 10ms per iteration (100ms total)
-			if (waitpid(script.shell_pid, &status, WNOHANG) > 0) {
-				if (WIFEXITED(status))		script.exit_code = WEXITSTATUS(status);
-				if (WIFSIGNALED(status))	script.exit_code = 128 + WTERMSIG(status);
-				script.shell_running = 0;
+		ts.tv_sec  = 0;
+		ts.tv_nsec = 10000000;	// 10ms
+
+		// Ask shell to exit nicely
+		kill(g_script.shell_pid, SIGHUP);								
+		// Wait 10ms per iteration (100ms total)
+		for (int i = 0; i < 10; ++i) {
+			nanosleep(&ts, NULL);
+			if (waitpid(g_script.shell_pid, &status, WNOHANG) > 0) {
+				if (WIFEXITED(status)) g_script.exit_code = WEXITSTATUS(status);
+				if (WIFSIGNALED(status)) {
+					g_script.signal = WTERMSIG(status);
+					g_script.exit_code = 128 + g_script.signal;
+				}
+				g_script.shell_running = 0;
 				return;
 			}
-			i++;
 		}
 
-		kill(script.shell_pid, SIGKILL);							// Kill shell
+		// Force kill unresponsive shell
+		kill(g_script.shell_pid, SIGKILL);							
 	}
 
 #pragma endregion

@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/14 11:33:39 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/15 19:11:17 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/15 23:14:35 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,9 @@
 
 	#include "script.h"
 
-	#include <signal.h>
+	#include <signal.h>							// signal()
+	#include <termios.h>						// struct winsize
+	#include <sys/ioctl.h>						// ioctl(), TIOCGWINSZ, TIOCSWINSZ
 	#include <sys/wait.h>						// waitpid(), WIFEXITED, WIFSIGNALED, WEXITSTATUS, WTERMSIG
 
 #pragma endregion
@@ -65,37 +67,40 @@
 
 #pragma region "Handler"
 
-	static void sig_handler(int sig) {
-		script.signal = sig;
-		script.shell_running = 0;
-	}
-
 	static void sigchld_handler(int sig) { (void)sig;
 		int status;
-		
-		if (waitpid(script.shell_pid, &status, WNOHANG) > 0) {
-			if (WIFEXITED(status))		script.exit_code = WEXITSTATUS(status);
-			if (WIFSIGNALED(status))	script.exit_code = 128 + WTERMSIG(status);
-			script.shell_running = 0;
+
+		if (waitpid(g_script.shell_pid, &status, WNOHANG) > 0) {
+			if (WIFEXITED(status)) g_script.exit_code = WEXITSTATUS(status);
+			if (WIFSIGNALED(status)) {
+				g_script.signal = WTERMSIG(status);
+				g_script.exit_code = 128 + g_script.signal;
+			}
+			g_script.shell_running = 0;
 		}
 	}
 
 	static void sigwinch_handler(int sig) { (void) sig;
-		// window_resized = 1;
+		struct winsize ws;
+
+		if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) != -1)
+			ioctl(g_script.master_fd, TIOCSWINSZ, &ws);
 	}
 
 #pragma endregion
 
 #pragma region "Set"
 
-	void signal_set() {
-		signal(SIGINT,   sig_handler);			// Interrupt from keyboard (Ctrl+C)
-		signal(SIGTERM,  sig_handler);			// Request to terminate the program gracefully (sent by 'kill' or system shutdown)
-		signal(SIGHUP,   sig_handler);			// Terminal hangup or controlling process terminated (often used to reload config)
-		signal(SIGQUIT,  sig_handler);			// Quit from keyboard (Ctrl+\)
-		signal(SIGPIPE,  sig_handler);			// Broken pipe (write to pipe with no readers)
-		signal(SIGCHLD,  sigchld_handler);		// 
-		signal(SIGWINCH, sigwinch_handler);		// Window size change
+	int signal_set() {
+		signal(SIGINT,   SIG_IGN);										// Interrupt from keyboard (Ctrl+C)
+		signal(SIGTERM,  SIG_IGN);										// Request to terminate the program gracefully (sent by 'kill' or system shutdown)
+		signal(SIGHUP,   SIG_IGN);										// Terminal hangup or controlling process terminated (often used to reload config)
+		signal(SIGQUIT,  SIG_IGN);										// Quit from keyboard (Ctrl+\)
+		signal(SIGPIPE,  SIG_IGN);										// Broken pipe (write to pipe with no readers)
+		signal(SIGWINCH, sigwinch_handler);								// Window size change
+		if (signal(SIGCHLD,  sigchld_handler) == SIG_ERR) return (1);	// Child process state changed (exited or stopped)
+
+		return (0);
 	}
 
 #pragma endregion

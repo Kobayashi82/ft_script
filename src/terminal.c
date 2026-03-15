@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/14 11:50:25 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/15 19:03:19 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/15 22:00:46 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,13 +19,13 @@
 #pragma region "Enable"
 
 	int raw_mode_enable() {
-		if (!script.raw_enabled) {
-			if (tcgetattr(STDIN_FILENO, &script.original_termios) == -1) {
+		if (!g_script.raw_enabled) {
+			if (tcgetattr(STDIN_FILENO, &g_script.original_termios) == -1) {
 				write(STDERR_FILENO, "Failed to get terminal attributes\n", 34);
 				return (1);
 			}
 
-			struct termios raw = script.original_termios;
+			struct termios raw = g_script.original_termios;
 			raw.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
 			raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
 			raw.c_cflag |= (CS8);
@@ -38,7 +38,7 @@
 				return (1);
 			}
 
-			script.raw_enabled = 1;
+			g_script.raw_enabled = 1;
 		}
 
 		return (0);
@@ -48,12 +48,19 @@
 
 #pragma region "Disable"
 
-	void raw_mode_disable() {
-		if (script.raw_enabled) {
-			tcsetattr(STDIN_FILENO, TCSAFLUSH, &script.original_termios);
+	int raw_mode_disable() {
+		int ret = 0;
+
+		if (g_script.raw_enabled) {
+			if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &g_script.original_termios) == -1) {
+				write(STDERR_FILENO, "Failed to disable raw mode\n", 23);
+				ret = 1;
+			}
 			write(STDOUT_FILENO, "\n", 1);
-			script.raw_enabled = 0;
+			g_script.raw_enabled = 0;
 		}
+
+		return (ret);
 	}
 
 #pragma endregion
