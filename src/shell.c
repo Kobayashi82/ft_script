@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/14 11:33:12 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/14 19:11:15 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/15 19:12:18 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,21 +14,23 @@
 
 	#include "script.h"
 
+	#include <signal.h>
 	#include <sys/ioctl.h>						// ioctl()
+	#include <sys/wait.h>						// waitpid(), WIFEXITED, WIFSIGNALED, WEXITSTATUS, WTERMSIG
 	#include <fcntl.h>							// open()
 
 #pragma endregion
 
-#pragma region "Get PTY Name"
+#pragma region "PTY Name"
 
-	static int	get_pty_name(int master_fd, char *pty_name, size_t size) {
+	static int pty_name(int master_fd, char *name, size_t size) {
 		int		pty_fd;
 		char	buffer[12];
 
 		if (ioctl(master_fd, TIOCGPTN, &pty_fd) == -1) return (1);
 		itoa_buffered(pty_fd, buffer);
-		ft_strlcpy(pty_name, "/dev/pts/", size);
-		ft_strlcpy(pty_name + 9, buffer, size - 9);
+		ft_strlcpy(name, "/dev/pts/", size);
+		ft_strlcpy(name + 9, buffer, size - 9);
 
 		return (0);
 	}
@@ -51,8 +53,8 @@
 			return (1);
 		}
 		
-		char pty_name[256];
-		if (get_pty_name(script.master_fd, pty_name, sizeof(pty_name))) {
+		char name[256];
+		if (pty_name(script.master_fd, name, sizeof(name))) {
 			// failed
 			close(script.master_fd);
 			return (1);
@@ -81,7 +83,7 @@
 		if (pid == 0) {
 			if (setsid() == -1) _exit(1);
 
-			script.slave_fd = open(pty_name, O_RDWR);
+			script.slave_fd = open(name, O_RDWR);
 			if (script.slave_fd == -1) {
 				// open slave failed
 				_exit(1);
@@ -130,7 +132,22 @@
 #pragma region "Close"
 
 	void shell_close() {
-		
+		int	i, status;
+
+		kill(script.shell_pid, SIGHUP);								// Ask shell to exit nicely
+		i = 0;
+		while (i < 10) {
+			usleep(10000);											// Wait 10ms per iteration (100ms total)
+			if (waitpid(script.shell_pid, &status, WNOHANG) > 0) {
+				if (WIFEXITED(status))		script.exit_code = WEXITSTATUS(status);
+				if (WIFSIGNALED(status))	script.exit_code = 128 + WTERMSIG(status);
+				script.shell_running = 0;
+				return;
+			}
+			i++;
+		}
+
+		kill(script.shell_pid, SIGKILL);							// Kill shell
 	}
 
 #pragma endregion
