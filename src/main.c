@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/11 14:09:39 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/16 13:19:43 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 15:22:19 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@
 #pragma endregion
 
 #pragma region "Select"
-#include <stdio.h>
+
 	static int select_loop() {
 		fd_set			read_fds;
 		char			buffer[4096];
@@ -43,7 +43,7 @@
 
 			if (select(max_fd + 1, &read_fds, NULL, NULL, NULL) == -1) {
 				if (errno == EINTR && !g_script.shell_kill) continue;
-				// Mensaje?
+				write(STDERR_FILENO, "ft_script: select failed\n", 25);
 				ret = 2; break;
 			}
 
@@ -52,15 +52,20 @@
 				readed = read(STDIN_FILENO, buffer, sizeof(buffer));
 				if (readed <= 0) { g_script.shell_running = 0; break; }
 				write(g_script.master_fd, buffer, readed);
-				if ((ret = log_files(buffer, readed, 0))) break;
+				if ((ret = log_output(buffer, readed, 0))) break;
 			}
 
 			// Shell output: forward to terminal and log to files
 			if (FD_ISSET(g_script.master_fd, &read_fds)) {
 				readed = read(g_script.master_fd, buffer, sizeof(buffer));
-				if (readed <= 0) { ret = 1; break; }
+				if (readed == 0)		break;
+				if (readed < 0) {
+					if (errno == EINTR)	continue;
+					if (errno == EIO)	break;
+					ret = 2;			break;
+				}
 				write(STDOUT_FILENO, buffer, readed);
-				if ((ret = log_files(buffer, readed, 1))) break;
+				if ((ret = log_output(buffer, readed, 1))) break;
 			}
 		}
 
@@ -83,7 +88,7 @@
 			readed = read(g_script.master_fd, buffer, sizeof(buffer));
 			if (readed <= 0)												break;
 			write(STDOUT_FILENO, buffer, readed);
-			if ((ret = log_files(buffer, readed, 1)))						break;
+			if ((ret = log_output(buffer, readed, 1)))						break;
 		}
 
 		log_end(ret);

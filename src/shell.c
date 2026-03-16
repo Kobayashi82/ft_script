@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/14 11:33:12 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/16 12:52:37 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 14:09:08 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -138,10 +138,10 @@
 
 			// Apply echo settings
 			struct termios term;
-			if (tcgetattr(g_script.slave_fd, &term) == 0) {
+			if (ioctl(g_script.slave_fd, TCGETS, &term) == 0) {
 				if		(!ft_strcmp(g_script.options.echo, "never"))  term.c_lflag &= ~ECHO;
 				else if (!ft_strcmp(g_script.options.echo, "always")) term.c_lflag |= ECHO;
-				tcsetattr(g_script.slave_fd, TCSANOW, &term);
+				ioctl(g_script.slave_fd, TCSETS, &term);
 			}
 			close(g_script.slave_fd);
 
@@ -163,6 +163,9 @@
 			_exit(1);
 		}
 
+		g_script.shell_pid = pid;
+		g_script.shell_running = 1;
+
 		// Wait until child closes pipe (execve success) or writes an error
 		close(err_pipe[1]);
 		char buffer[64];
@@ -173,13 +176,11 @@
 			write(STDERR_FILENO, "ft_script: ", 11);
 			write(STDERR_FILENO, buffer, readed);
 			waitpid(pid, NULL, 0);
+			g_script.shell_pid = 0;
+			g_script.shell_running = 0;
 			close(g_script.master_fd);
 			return (1);
 		}
-
-		// Store child PID and mark shell as running
-		g_script.shell_pid = pid;
-		g_script.shell_running = 1;
 
 		return (0);
 	}

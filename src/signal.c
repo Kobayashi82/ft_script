@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/14 11:33:39 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/16 12:52:16 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 14:07:49 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,9 +73,11 @@
 	}
 
 	static void sigchld_handler(int sig) { (void)sig;
-		int status;
+		int		status;
+		pid_t	pid;
 
-		if (waitpid(g_script.shell_pid, &status, WNOHANG) > 0) {
+		while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+			if (pid != g_script.shell_pid) continue;
 			if (WIFEXITED(status)) g_script.exit_code = WEXITSTATUS(status);
 			if (WIFSIGNALED(status)) {
 				g_script.shell_signal = WTERMSIG(status);

@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/15 17:30:37 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/16 13:14:15 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 15:28:35 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,90 +14,16 @@
 
 	#include "script.h"
 
-	#include <sys/time.h>						// time(), localtime(), struct tm, time_t
+	#include <sys/time.h>						// gettimeofday(), struct timeval
 	#include <unistd.h>							// write()
-
-#pragma endregion
-
-#pragma region "Write"
-
-	#pragma region "Write ULong"
-
-		static size_t write_ulong(int fd, unsigned long value) {
-			char	buffer[20];
-			int		i = 19;
-
-			if (!value) return (write(fd, "0", 1));
-
-			buffer[i] = '\0';
-			while (value > 0) {
-				buffer[--i] = '0' + (value % 10);
-				value /= 10;
-			}
-
-			return (write(fd, buffer + i, 19 - i));
-		}
-
-	#pragma endregion
-
-	#pragma region "Write Timing"
-
-		static void write_timing(int fd, size_t *size, char *type, ssize_t bytes) {
-			struct timeval			now;
-			static struct timeval	last_time;
-			static int				timing_started;
-			char					pad[6];
-
-			// Get current time and initialize on first call
-			gettimeofday(&now, NULL);
-			if (!timing_started) {
-				last_time = now;
-				timing_started = 1;
-			}
-
-			// Calculate time delta since last timing entry
-			long delta_sec  = now.tv_sec  - last_time.tv_sec;
-			long delta_usec = now.tv_usec - last_time.tv_usec;
-			// Compensate for negative microseconds
-			if (delta_usec < 0) {
-				delta_sec--;
-				delta_usec += 1000000L;
-			}
-			last_time = now;
-
-			// Write prefix (I/O) only in advanced format
-			if (!ft_strcmp(g_script.options.format, "advanced")) *size += write(fd, type, 2);
-
-			// Write seconds
-			*size += write_ulong(fd, (unsigned long)delta_sec);
-			*size += write(fd, ".", 1);
-
-			// Write microseconds
-			long usec = delta_usec;
-			int i = 5;
-			while (i >= 0) {
-				pad[i--] = '0' + (usec % 10);
-				usec /= 10;
-			}
-			*size += write(fd, pad, 6);
-			*size += write(fd, " ", 1);
-
-			// Write bytes
-			*size += write_ulong(fd, (unsigned long)bytes);
-			*size += write(fd, "\n", 1);
-
-			if (g_script.options.flush) fsync(fd);
-		}
-
-	#pragma endregion
 
 #pragma endregion
 
 #pragma region "Start"
 
-	#pragma region "Log Files"
+	#pragma region "Output"
 
-		static size_t log_start_file(int fd) {
+		static size_t log_start_output(int fd) {
 			size_t total = write(fd, "Script started on ", 18);
 			char *ts = ctime(&g_script.start_time);
 			if (ts) total += write(fd, ts, 24);
@@ -122,13 +48,15 @@
 
 	#pragma endregion
 
-	#pragma region "Log Terminal"
+	#pragma region "Terminal"
 
 		int log_start() {
 			size_t	total = 0;
 			int		ret = 0;
 
 			g_script.start_time = time(NULL);
+			gettimeofday(&g_script.log_start_tv, NULL);
+			g_script.log_started = 1;
 
 			if (!g_script.options.quiet) {
 				write(STDOUT_FILENO, "Script started", 14);
@@ -151,14 +79,16 @@
 			}
 
 			if (g_script.out_fd != -1) {
-				total = log_start_file(g_script.out_fd);
+				total = log_start_output(g_script.out_fd);
 				g_script.out_size += total;
 				if (g_script.options.flush) fsync(g_script.out_fd);
 				if (g_script.options.size && g_script.out_size >= g_script.options.size) ret = 3;
 			}
 
-			if (g_script.time_fd != -1 && total > 0)
-				write_timing(g_script.time_fd, &g_script.time_size, "O ", total);
+			if (g_script.time_fd != -1 && !ft_strcmp(g_script.options.format, "advanced")) {
+				write_time_start_headers(g_script.time_fd, &g_script.time_size);
+				if (g_script.options.flush) fsync(g_script.time_fd);
+			}
 
 			return (ret);
 		}
@@ -169,9 +99,9 @@
 
 #pragma region "End"
 
-	#pragma region "Log Files"
+	#pragma region "Output"
 
-		static size_t end_message_file(int fd, int ret) {
+		static size_t log_end_output(int fd, int ret) {
 			size_t total = 0;
 			time_t end_time = time(NULL);
 			char *ts = ctime(&end_time);
@@ -208,10 +138,10 @@
 
 	#pragma endregion
 
-	#pragma region "Log Terminal"
+	#pragma region "Terminal"
 
 		void log_end(int ret) {
-			if (ret == 3) {	// Y ret == 2?
+			if (ret == 3) {
 				write(STDOUT_FILENO, "Script terminated, max output files size ", 41);
 				write_ulong(STDOUT_FILENO, (unsigned long)g_script.options.size);
 				write(STDOUT_FILENO, " exceeded.\n", 11);
@@ -221,14 +151,17 @@
 
 			size_t total = 0;
 			if (g_script.out_fd != -1) {
-				total = end_message_file(g_script.out_fd, ret);
+				total = log_end_output(g_script.out_fd, ret);
 				g_script.out_size += total;
 				if (g_script.options.flush) fsync(g_script.out_fd);
 				if (g_script.options.size && g_script.out_size >= g_script.options.size) ret = 3;
 			}
 
-			if (g_script.time_fd != -1 && total > 0)
-				write_timing(g_script.time_fd, &g_script.time_size, "O ", total);
+			if (g_script.time_fd != -1 && !ft_strcmp(g_script.options.format, "advanced")) {
+				write_time_end_headers(g_script.time_fd, &g_script.time_size);
+				if (g_script.options.flush)
+					fsync(g_script.time_fd);
+			}
 		}
 
 	#pragma endregion
@@ -236,17 +169,19 @@
 #pragma endregion
 
 #pragma region "Files"
-#include <stdio.h>
-#include <errno.h>
-	int log_files(const char *buffer, ssize_t bytes, int output) {
-		int ret = 0;
+
+	int log_output(const char *buffer, ssize_t bytes, int output) {
+		int		ret = 0;
 
 		// Input (-I) / Output (-O)
 		int fd = (output) ? g_script.out_fd : g_script.in_fd;
 		size_t *size = (output) ? &g_script.out_size : &g_script.in_size;
 		if (fd != -1) {
 			write(fd, buffer, bytes);
-			*size += bytes;
+			*size += (size_t)bytes;
+			if (g_script.in_fd != -1 && g_script.out_fd != -1 && g_script.in_fd == g_script.out_fd) {
+				g_script.in_size = g_script.out_size = *size;
+			}
 			if (g_script.options.flush) fsync(fd);
 			if (g_script.options.size && *size >= g_script.options.size) {
 				g_script.shell_running = 0;

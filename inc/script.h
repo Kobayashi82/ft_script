@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/11 14:09:50 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/16 12:31:25 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 15:22:25 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,8 @@
 	#include "utils.h"
 
 	#include <time.h>											// clock_gettime(), struct timespec
-	#include <termios.h>										// tcgetattr(), tcsetattr(), termios, winsize
+	#include <sys/time.h>										// struct timeval
+	#include <termios.h>										// termios
 
 #pragma endregion
 
@@ -44,6 +45,8 @@
 	typedef struct s_script {
 		t_options		options;								// Parsed options
 		time_t			start_time;								// Timestamp when the session started
+		struct timeval	log_start_tv;							// High-resolution timestamp for timing duration
+		int				log_started;							// Whether timing session start was initialized
 		int				signal;									// Signal received in parent
 		int				exit_code;								// Exit code of the shell process
 		char			*env[256], tty[256], col[9], row[9];	// Environment variables passed to the shell
@@ -88,6 +91,11 @@
 	// Log
 	int			log_start();
 	void		log_end(int ret);
-	int			log_files(const char *buffer, ssize_t bytes, int output);
+	int			log_output(const char *buffer, ssize_t bytes, int output);
+	// Time
+	size_t		write_ulong(int fd, unsigned long value);
+	void		write_timing(int fd, size_t *size, char *type, ssize_t bytes);
+	void		write_time_start_headers(int fd, size_t *size);
+	void		write_time_end_headers(int fd, size_t *size);
 
 #pragma endregion
