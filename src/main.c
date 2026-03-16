@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/11 14:09:39 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/16 11:49:41 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 13:19:43 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@
 #pragma endregion
 
 #pragma region "Select"
-
+#include <stdio.h>
 	static int select_loop() {
 		fd_set			read_fds;
 		char			buffer[4096];
@@ -42,7 +42,7 @@
 			FD_SET(g_script.master_fd, &read_fds);
 
 			if (select(max_fd + 1, &read_fds, NULL, NULL, NULL) == -1) {
-				if (errno == EINTR) continue;
+				if (errno == EINTR && !g_script.shell_kill) continue;
 				// Mensaje?
 				ret = 2; break;
 			}
@@ -65,7 +65,11 @@
 		}
 
 		// Kill shell if it is still running
-		if (g_script.shell_running) shell_close();
+		if (g_script.shell_running) g_script.shell_kill = 1;
+		if (g_script.shell_kill) {
+			write(STDOUT_FILENO, "Session terminated, killing shell... ", 37);
+			shell_close();
+		}
 
 		// Drain any remaining PTY output after shell exits
 		struct timeval timeout;

@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/14 11:33:39 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/16 11:53:07 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 12:52:16 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,15 +67,21 @@
 
 #pragma region "Handler"
 
+	static void sigend_handler(int sig) {
+		g_script.signal = sig;
+		g_script.shell_kill = 1;
+	}
+
 	static void sigchld_handler(int sig) { (void)sig;
 		int status;
 
 		if (waitpid(g_script.shell_pid, &status, WNOHANG) > 0) {
 			if (WIFEXITED(status)) g_script.exit_code = WEXITSTATUS(status);
 			if (WIFSIGNALED(status)) {
-				g_script.signal = WTERMSIG(status);
-				g_script.exit_code = 128 + g_script.signal;
+				g_script.shell_signal = WTERMSIG(status);
+				g_script.exit_code = 128 + g_script.shell_signal;
 			}
+			g_script.shell_pid = 0;
 			g_script.shell_running = 0;
 		}
 	}
@@ -92,10 +98,10 @@
 #pragma region "Set"
 
 	int signal_set() {
-		signal(SIGINT,   SIG_IGN);										// Interrupt from keyboard (Ctrl+C)
-		signal(SIGTERM,  SIG_IGN);										// Request to terminate the program gracefully (sent by 'kill' or system shutdown)
-		signal(SIGHUP,   SIG_IGN);										// Terminal hangup or controlling process terminated (often used to reload config)
-		signal(SIGQUIT,  SIG_IGN);										// Quit from keyboard (Ctrl+\)
+		signal(SIGINT,   sigend_handler);								// Interrupt from keyboard (Ctrl+C)
+		signal(SIGTERM,  sigend_handler);								// Request to terminate the program gracefully (sent by 'kill' or system shutdown)
+		signal(SIGHUP,   sigend_handler);								// Terminal hangup or controlling process terminated (often used to reload config)
+		signal(SIGQUIT,  sigend_handler);								// Quit from keyboard (Ctrl+\)
 		signal(SIGPIPE,  SIG_IGN);										// Broken pipe (write to pipe with no readers)
 		signal(SIGWINCH, sigwinch_handler);								// Window size change
 		if (signal(SIGCHLD,  sigchld_handler) == SIG_ERR) return (1);	// Child process state changed (exited or stopped)

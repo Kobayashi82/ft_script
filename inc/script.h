@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/11 14:09:50 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/16 11:50:41 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 12:31:25 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,12 +44,14 @@
 	typedef struct s_script {
 		t_options		options;								// Parsed options
 		time_t			start_time;								// Timestamp when the session started
-		int				signal;									// Signal that terminated the shell
+		int				signal;									// Signal received in parent
 		int				exit_code;								// Exit code of the shell process
 		char			*env[256], tty[256], col[9], row[9];	// Environment variables passed to the shell
 		char			*term, *shell_path;						// Path to the shell executable
+		int				shell_kill;								// Flag indicating to kill the shell
 		int				shell_pid;								// PID of the child shell processs
 		int				shell_running;							// Flag indicating if the shell is still running
+		int				shell_signal;							// Signal that terminated the shell
 		int				master_fd;								// Master side of the PTY
 		int				slave_fd;								// Slave side of the PTY
 		int				raw_enabled;							// Flag indicating if terminal is in raw mode

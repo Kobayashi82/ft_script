@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/15 17:30:37 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/16 12:10:47 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 13:14:15 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -181,16 +181,16 @@
 				if (ts) total += write(fd, ts, 24);
 				total += write(fd, " [<max output size exceeded>]\n", 30);
 			}
-			else if (g_script.signal)
+			else if (g_script.shell_signal)
 			{
 				total += write(fd, "\nScript stopped on ", 19);
 				if (ts) total += write(fd, ts, 24);
 				total += write(fd, " [COMMAND_EXIT_CODE=\"", 21);
 				total += write_ulong(fd, (unsigned long)g_script.exit_code);
 				total += write(fd, "\" SIGNAL=\"", 10);
-				total += write_ulong(fd, (unsigned long)g_script.signal);
+				total += write_ulong(fd, (unsigned long)g_script.shell_signal);
 				total += write(fd, "\" SIGNAL_NAME=\"", 15);
-				const char *name = signal_name(g_script.signal);
+				const char *name = signal_name(g_script.shell_signal);
 				total += write(fd, name, ft_strlen(name));
 				total += write(fd, "\"]\n", 3);
 			}
@@ -216,15 +216,6 @@
 				write_ulong(STDOUT_FILENO, (unsigned long)g_script.options.size);
 				write(STDOUT_FILENO, " exceeded.\n", 11);
 			}
-			else if (g_script.signal)
-			{
-				write(STDOUT_FILENO, "Script terminated: signal ", 26);
-				write_ulong(STDOUT_FILENO, (unsigned long)g_script.signal);
-				write(STDOUT_FILENO, " (", 2);
-				const char *name = signal_name(g_script.signal);
-				write(STDOUT_FILENO, name, ft_strlen(name));
-				write(STDOUT_FILENO, ").\n", 3);
-			}
 
 			write(STDOUT_FILENO, "Script done.\n", 13);
 
@@ -245,7 +236,8 @@
 #pragma endregion
 
 #pragma region "Files"
-
+#include <stdio.h>
+#include <errno.h>
 	int log_files(const char *buffer, ssize_t bytes, int output) {
 		int ret = 0;
 

@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 12:14:27 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/16 11:52:10 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 12:57:10 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -203,10 +203,10 @@
 
 		#pragma region "Set Value"
 
-			static int set_value(char opt, char **argv, int *i, char *dst, int *log_dst) {
+			static int set_value(char opt, char **argv, int *i, char *dst, int *log_dst, size_t size) {
 				*log_dst = 1;
 				if (next_arg(opt, argv, i)) return (2);
-				ft_strlcpy(dst, argv[*i], sizeof(dst));
+				ft_strlcpy(dst, argv[*i], size);
 
 				return (0);
 			}
@@ -220,18 +220,18 @@
 		static int process_option(t_options *options, char **argv, int *i) {
 			char opt = argv[*i][1];
 			switch (opt) {
-				case 'I':	return (set_value(opt, argv, i, options->in, &options->log_in));
-				case 'O':	return (set_value(opt, argv, i, options->out, &options->log_out));
+				case 'I':	return (set_value(opt, argv, i, options->in, &options->log_in, sizeof(options->in)));
+				case 'O':	return (set_value(opt, argv, i, options->out, &options->log_out, sizeof(options->out)));
 				case 'B': {
-							int ret = set_value(opt, argv, i, options->out, &options->log_out);
+							int ret = set_value(opt, argv, i, options->out, &options->log_out, sizeof(options->out));
 							if (!ret) {
 								ft_strlcpy(options->in, options->out, sizeof(options->in));
 								options->log_in = 1;
 							}
 							return (ret);
 				}
-				case 'T':	return (set_value(opt, argv, i, options->time, &options->log_time));
-				case 'c':	return (set_value(opt, argv, i, options->command, &options->log_command));
+				case 'T':	return (set_value(opt, argv, i, options->time, &options->log_time, sizeof(options->time)));
+				case 'c':	return (set_value(opt, argv, i, options->command, &options->log_command, sizeof(options->command)));
 				case 'E':	return (set_echo(opt, argv, i, options->echo, sizeof(options->echo)));
 				case 'm':	return (set_format(opt, argv, i, options->format, sizeof(options->format)));
 				case 'o':	return (set_size(opt, argv, i, &options->size));

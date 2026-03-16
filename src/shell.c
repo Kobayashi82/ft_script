@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/14 11:33:12 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/16 11:57:24 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 12:52:37 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -190,29 +190,33 @@
 
 	void shell_close() {
 		struct timespec	ts;
-		int				status;
 
 		ts.tv_sec  = 0;
 		ts.tv_nsec = 10000000;	// 10ms
 
+		if (!g_script.shell_pid) return;
+
+		signal(SIGCHLD, SIG_DFL);
+
 		// Ask shell to exit nicely
-		kill(g_script.shell_pid, SIGHUP);								
+		kill(g_script.shell_pid, SIGHUP);
 		// Wait 10ms per iteration (100ms total)
 		for (int i = 0; i < 10; ++i) {
 			nanosleep(&ts, NULL);
-			if (waitpid(g_script.shell_pid, &status, WNOHANG) > 0) {
-				if (WIFEXITED(status)) g_script.exit_code = WEXITSTATUS(status);
-				if (WIFSIGNALED(status)) {
-					g_script.signal = WTERMSIG(status);
-					g_script.exit_code = 128 + g_script.signal;
-				}
+			if (waitpid(g_script.shell_pid, NULL, WNOHANG) > 0) {
+				g_script.exit_code = 0;
 				g_script.shell_running = 0;
+				write(STDOUT_FILENO, "...killed\n", 10);
 				return;
 			}
 		}
 
 		// Force kill unresponsive shell
-		kill(g_script.shell_pid, SIGKILL);						
+		kill(g_script.shell_pid, SIGKILL);
+		waitpid(g_script.shell_pid, NULL, 0);
+		g_script.exit_code = 0;
+		g_script.shell_running = 0;
+		write(STDOUT_FILENO, "...killed\n", 10);
 	}
 
 #pragma endregion
