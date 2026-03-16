@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/14 11:33:39 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/15 23:14:35 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 11:53:07 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,6 +101,20 @@
 		if (signal(SIGCHLD,  sigchld_handler) == SIG_ERR) return (1);	// Child process state changed (exited or stopped)
 
 		return (0);
+	}
+
+#pragma endregion
+
+#pragma region "Set"
+
+	void signal_reset() {
+		signal(SIGINT,   SIG_DFL);
+		signal(SIGTERM,  SIG_DFL);
+		signal(SIGHUP,   SIG_DFL);
+		signal(SIGQUIT,  SIG_DFL);
+		signal(SIGPIPE,  SIG_DFL);
+		signal(SIGWINCH, SIG_DFL);
+		signal(SIGCHLD,  SIG_DFL);
 	}
 
 #pragma endregion

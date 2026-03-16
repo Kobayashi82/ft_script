@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 12:14:27 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/15 23:42:32 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 11:52:10 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -147,9 +147,9 @@
 
 		#pragma region "Set Echo"
 
-			static int set_echo(char opt, char **argv, int *i, char *dst) {
+			static int set_echo(char opt, char **argv, int *i, char *dst, size_t size) {
 				if (next_arg(opt, argv, i)) return (2);
-				ft_strlcpy(dst, argv[*i], sizeof(dst));
+				ft_strlcpy(dst, argv[*i], size);
 
 				if (ft_strcmp(dst, "auto") && ft_strcmp(dst, "always") && ft_strcmp(dst, "never")) {
 					write(STDERR_FILENO, "ft_script: script: unssuported echo mode: '", 43);
@@ -165,9 +165,9 @@
 
 		#pragma region "Set Format"
 
-			static int set_format(char opt, char **argv, int *i, char *dst) {
+			static int set_format(char opt, char **argv, int *i, char *dst, size_t size) {
 				if (next_arg(opt, argv, i)) return (2);
-				ft_strlcpy(dst, argv[*i], sizeof(dst));
+				ft_strlcpy(dst, argv[*i], size);
 
 				if (ft_strcmp(dst, "classic") && ft_strcmp(dst, "advanced")) {
 					write(STDERR_FILENO, "ft_script: unsupported logging format: '", 40);
@@ -224,13 +224,16 @@
 				case 'O':	return (set_value(opt, argv, i, options->out, &options->log_out));
 				case 'B': {
 							int ret = set_value(opt, argv, i, options->out, &options->log_out);
-							if (!ret) ft_strlcpy(options->in, options->out, sizeof(options->in));
+							if (!ret) {
+								ft_strlcpy(options->in, options->out, sizeof(options->in));
+								options->log_in = 1;
+							}
 							return (ret);
 				}
 				case 'T':	return (set_value(opt, argv, i, options->time, &options->log_time));
 				case 'c':	return (set_value(opt, argv, i, options->command, &options->log_command));
-				case 'E':	return (set_echo(opt, argv, i, options->echo));
-				case 'm':	return (set_format(opt, argv, i, options->format));
+				case 'E':	return (set_echo(opt, argv, i, options->echo, sizeof(options->echo)));
+				case 'm':	return (set_format(opt, argv, i, options->format, sizeof(options->format)));
 				case 'o':	return (set_size(opt, argv, i, &options->size));
 				case 'a':	options->append = 1;	return (0);
 				case 'e':	options->retur = 1;		return (0);
@@ -249,7 +252,7 @@
 
 		static int is_option(const char *arg) {
 			if (!arg[0] || arg[0] != '-') 							return (0);
-			if (ft_strchr("IOBTmacefFEoqhV", arg[1]) && !arg[2])	return (1);
+			if (ft_strchr("IOBTmacefEoqhV", arg[1]) && !arg[2])	return (1);
 			if (arg[1] == '-' && !arg[2])							return (-1);
 
 			write(STDERR_FILENO, "ft_script: invalid option -- '", 30);
@@ -269,7 +272,7 @@
 			int	parse = 1;
 
 			ft_strlcpy(options->echo,   "auto",     sizeof(options->echo));
-			ft_strlcpy(options->format, "advanced", sizeof(options->echo));
+			ft_strlcpy(options->format, "advanced", sizeof(options->format));
 
 			for (int i = 1; i < argc; ++i) {
 				if (parse && (ret = is_option(argv[i]))) {

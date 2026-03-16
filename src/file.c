@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/15 17:55:58 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/15 23:43:04 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 11:48:28 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,14 +52,14 @@
 		g_script.in_fd   = g_script.out_fd   = g_script.time_fd   = -1;
 		g_script.in_size = g_script.out_size = g_script.time_size = 0;
 
-		if (!ret && g_script.options.log_in)		ret = open_file(&g_script.in_fd,   g_script.options.in,   g_script.options.append, &g_script.in_size);
-		if (!ret && g_script.options.log_out)		ret = open_file(&g_script.out_fd,  g_script.options.out,  g_script.options.append, &g_script.out_size);
+		if (!ret && g_script.options.log_in)	ret = open_file(&g_script.in_fd,   g_script.options.in,   g_script.options.append, &g_script.in_size);
+		if (!ret && g_script.options.log_out)	ret = open_file(&g_script.out_fd,  g_script.options.out,  g_script.options.append, &g_script.out_size);
 		if (!ret && g_script.options.log_time)	ret = open_file(&g_script.time_fd, g_script.options.time, g_script.options.append, &g_script.time_size);
 		if (ret) {
-			if (g_script.in_fd	 != -1) close(g_script.in_fd);
-			if (g_script.out_fd	 != -1) close(g_script.out_fd);
-			if (g_script.time_fd	 != -1) close(g_script.time_fd);
-			if (g_script.master_fd != -1) close(g_script.master_fd);
+			if (g_script.in_fd		!= -1) close(g_script.in_fd);
+			if (g_script.out_fd		!= -1) close(g_script.out_fd);
+			if (g_script.time_fd	!= -1) close(g_script.time_fd);
+			if (g_script.master_fd	!= -1) close(g_script.master_fd);
 			return (1);
 		}	
 
@@ -71,10 +71,10 @@
 #pragma region "Close Files"
 
 	void close_files() {
-		if (g_script.in_fd	 != -1) close(g_script.in_fd);
-		if (g_script.out_fd	 != -1) close(g_script.out_fd);
-		if (g_script.time_fd	 != -1) close(g_script.time_fd);
-		if (g_script.master_fd != -1) close(g_script.master_fd);
+		if (g_script.in_fd		!= -1) close(g_script.in_fd);
+		if (g_script.out_fd		!= -1) close(g_script.out_fd);
+		if (g_script.time_fd	!= -1) close(g_script.time_fd);
+		if (g_script.master_fd	!= -1) close(g_script.master_fd);
 	}
 
 #pragma endregion

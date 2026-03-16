@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/11 14:09:50 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/15 23:46:01 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 11:50:41 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,6 +76,7 @@
 	// Signal
 	const char	*signal_name(int sig);
 	int			signal_set();
+	void		signal_reset();
 	// Terminal
 	int			raw_mode_enable();
 	int			raw_mode_disable();

@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/14 11:33:12 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/15 23:14:28 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 11:57:24 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,6 +101,9 @@
 		}
 
 		if (pid == 0) {
+			// Reset signal handlers
+			signal_reset();
+
 			// Close unneeded fds and mark error pipe as close-on-exec
 			close(g_script.master_fd);
 			close(err_pipe[0]);
@@ -161,10 +164,10 @@
 		}
 
 		// Wait until child closes pipe (execve success) or writes an error
+		close(err_pipe[1]);
 		char buffer[64];
 		ssize_t readed = read(err_pipe[0], buffer, sizeof(buffer) - 1);
 		close(err_pipe[0]);
-		close(err_pipe[1]);
 		if (readed > 0) {
 			buffer[readed] = '\0';
 			write(STDERR_FILENO, "ft_script: ", 11);
@@ -209,7 +212,7 @@
 		}
 
 		// Force kill unresponsive shell
-		kill(g_script.shell_pid, SIGKILL);							
+		kill(g_script.shell_pid, SIGKILL);						
 	}
 
 #pragma endregion

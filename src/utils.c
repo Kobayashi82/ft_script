@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 12:21:40 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/14 19:09:42 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 11:54:51 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@
 
 #pragma region "STRLCPY"
 
-	int ft_strlcpy(char *dst, const char *src, size_t dstsize) {
+	size_t ft_strlcpy(char *dst, const char *src, size_t dstsize) {
 		size_t i = 0, srclen = 0;
 
 		if (!src) return (0);
@@ -75,10 +75,10 @@
 		return (*(unsigned char *)s1 - *(unsigned char *)s2);
 	}
 
-	int ft_strncmp(const char *s1, const char *s2, int n) {
+	int ft_strncmp(const char *s1, const char *s2, size_t n) {
 		unsigned char	*str1;
 		unsigned char	*str2;
-		int				i;
+		size_t				i;
 
 		if (!s1 || !s2) return (-1);
 		str1 = (unsigned char *)s1;

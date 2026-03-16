@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/11 14:09:39 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/15 22:00:09 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 11:49:41 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,6 @@
 		int				ret = 0;
 		int				max_fd = (STDIN_FILENO > g_script.master_fd) ? STDIN_FILENO : g_script.master_fd;
 
-		if (open_files()) return (1);
 		log_start();
 
 		while (g_script.shell_running) {
@@ -44,6 +43,7 @@
 
 			if (select(max_fd + 1, &read_fds, NULL, NULL, NULL) == -1) {
 				if (errno == EINTR) continue;
+				// Mensaje?
 				ret = 2; break;
 			}
 
@@ -75,17 +75,17 @@
 			FD_ZERO(&read_fds);
 			FD_SET(g_script.master_fd, &read_fds);
 			if (select(max_fd + 1, &read_fds, NULL, NULL, &timeout) <= 0)	break;
-			if (!FD_ISSET(g_script.master_fd, &read_fds))						break;
+			if (!FD_ISSET(g_script.master_fd, &read_fds))					break;
 			readed = read(g_script.master_fd, buffer, sizeof(buffer));
 			if (readed <= 0)												break;
 			write(STDOUT_FILENO, buffer, readed);
 			if ((ret = log_files(buffer, readed, 1)))						break;
 		}
 
-		// log_end(ret);
+		log_end(ret);
 		close_files();
 
-		return (0);
+		return (ret);
 	}
 
 #pragma endregion
@@ -96,8 +96,9 @@
 		int ret = 0;
 
 		if ((ret = parse_options(argc, argv, env)))	return (ret -1);
-		if (shell_start())							return (1);
+		if (open_files())							return (1);
 		if (signal_set())							return (1);
+		if (shell_start())							return (1);
 		if (!raw_mode_enable())						ret = select_loop();
 		if (raw_mode_disable())						ret = 1;
 		if (g_script.options.retur)					return (g_script.exit_code);

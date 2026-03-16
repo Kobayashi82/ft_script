@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/15 17:30:37 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/15 23:45:19 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 12:10:47 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,7 +101,13 @@
 			size_t total = write(fd, "Script started on ", 18);
 			char *ts = ctime(&g_script.start_time);
 			if (ts) total += write(fd, ts, 24);
-			total += write(fd, " [TERM=\"", 8);
+			total += write(fd, " [", 2);
+			if (g_script.options.log_command) {
+				total += write(fd, "COMMAND=\"", 9);
+				total += write(fd, g_script.options.command, ft_strlen(g_script.options.command));
+				total += write(fd, "\" ", 2);
+			}
+			total += write(fd, "TERM=\"", 6);
 			total += write(fd, g_script.term,  ft_strlen(g_script.term));
 			total += write(fd, "\" TTY=\"", 7);
 			total += write(fd, g_script.tty,   ft_strlen(g_script.tty));
@@ -125,7 +131,7 @@
 			g_script.start_time = time(NULL);
 
 			if (!g_script.options.quiet) {
-				write(STDOUT_FILENO, "Script started", 17);
+				write(STDOUT_FILENO, "Script started", 14);
 				if (g_script.out_fd != -1) {
 					write(STDOUT_FILENO, ", output log file is '", 22);
 					write(STDOUT_FILENO, g_script.options.out, ft_strlen(g_script.options.out));
@@ -171,13 +177,13 @@
 			char *ts = ctime(&end_time);
 
 			if (ret == 3) {
-				total += write(fd, "Script stopped on ", 18);
+				total += write(fd, "\nScript stopped on ", 19);
 				if (ts) total += write(fd, ts, 24);
 				total += write(fd, " [<max output size exceeded>]\n", 30);
 			}
 			else if (g_script.signal)
 			{
-				total += write(fd, "Script stopped on ", 18);
+				total += write(fd, "\nScript stopped on ", 19);
 				if (ts) total += write(fd, ts, 24);
 				total += write(fd, " [COMMAND_EXIT_CODE=\"", 21);
 				total += write_ulong(fd, (unsigned long)g_script.exit_code);
@@ -190,7 +196,7 @@
 			}
 			else
 			{
-				total += write(fd, "Script done on ", 15);
+				total += write(fd, "\nScript done on ", 16);
 				if (ts) total += write(fd, ts, 24);
 				total += write(fd, " [COMMAND_EXIT_CODE=\"", 21);
 				total += write_ulong(fd, (unsigned long)g_script.exit_code);
@@ -205,7 +211,7 @@
 	#pragma region "Log Terminal"
 
 		void log_end(int ret) {
-			if (ret == 3) {
+			if (ret == 3) {	// Y ret == 2?
 				write(STDOUT_FILENO, "Script terminated, max output files size ", 41);
 				write_ulong(STDOUT_FILENO, (unsigned long)g_script.options.size);
 				write(STDOUT_FILENO, " exceeded.\n", 11);
@@ -223,7 +229,6 @@
 			write(STDOUT_FILENO, "Script done.\n", 13);
 
 			size_t total = 0;
-			ret = 0;
 			if (g_script.out_fd != -1) {
 				total = end_message_file(g_script.out_fd, ret);
 				g_script.out_size += total;
