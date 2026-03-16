@@ -6,7 +6,7 @@
 /*   By: vzurera- <vzurera-@student.42malaga.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/15 17:30:37 by vzurera-          #+#    #+#             */
-/*   Updated: 2026/03/16 15:28:35 by vzurera-         ###   ########.fr       */
+/*   Updated: 2026/03/16 15:44:26 by vzurera-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,14 +141,16 @@
 	#pragma region "Terminal"
 
 		void log_end(int ret) {
-			if (ret == 3) {
-				write(STDOUT_FILENO, "Script terminated, max output files size ", 41);
-				write_ulong(STDOUT_FILENO, (unsigned long)g_script.options.size);
-				write(STDOUT_FILENO, " exceeded.\n", 11);
+			if (!g_script.options.quiet) {
+				if (ret == 3) {
+					write(STDOUT_FILENO, "Script terminated, max output files size ", 41);
+					write_ulong(STDOUT_FILENO, (unsigned long)g_script.options.size);
+					write(STDOUT_FILENO, " exceeded.\n", 11);
+				}
+
+				write(STDOUT_FILENO, "Script done.\n", 13);
 			}
-
-			write(STDOUT_FILENO, "Script done.\n", 13);
-
+	
 			size_t total = 0;
 			if (g_script.out_fd != -1) {
 				total = log_end_output(g_script.out_fd, ret);

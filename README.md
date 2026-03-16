@@ -17,7 +17,14 @@
 
 [README en Espanol](README_es.md)
 
-`ft_script` is...
+`ft_script` is a reimplementation of the Unix `script` utility.
+
+It records terminal sessions through a PTY and stores:
+- output logs (default)
+- optional input logs
+- optional timing metadata for replay/analysis
+
+The project is built in C with low-level Unix APIs and minimal parsing logic.
 
 ## 🔧 Installation
 
@@ -30,19 +37,69 @@ make
 ## 🖥️ Usage
 
 ```bash
-./ft_script ...
+./ft_script [options] [file]
+```
+
+If no file is provided, output is written to `typescript`.
+
+### Quick Usage
+
+```bash
+# Interactive session, default output file: typescript
+./ft_script
+
+# Interactive session to a custom file
+./ft_script session.log
+
+# Run a command and exit
+./ft_script -c "ls -la"
 ```
 
 ### Options
-| Option | Description                          |
-|--------|--------------------------------------|
-| `-?`   | ...                                  |
+| Option         | Description                                 |
+|----------------|---------------------------------------------|
+| `-I <file>`    | Log stdin to file                           |
+| `-O <file>`    | Log stdout to file (default behavior)       |
+| `-B <file>`    | Log stdin and stdout to the same file       |
+| `-T <file>`    | Log timing information to file              |
+| `-m <name>`    | Force format: `classic` or `advanced`       |
+| `-a`           | Append to log file(s) instead of truncating |
+| `-c <command>` | Run command instead of interactive shell    |
+| `-e`           | Return child process exit code              |
+| `-f`           | Flush after each write                      |
+| `-E <when>`    | Echo input: `auto`, `always`, or `never`    |
+| `-o <size>`    | Stop when output files exceed size          |
+| `-q`           | Quiet mode (less terminal output)           |
+| `-h`           | Show help                                   |
+| `-V`           | Show version                                |
+|
+
+### Log Formats
+
+- `advanced` (default): modern format with richer timing metadata
+- `classic`: classic timing format compatibility
 
 ### Examples
 
 ```bash
-./ft_script ...
+# Log both input and output to one file
+./ft_script -B session.log
+
+# Save output + timing in classic mode
+./ft_script -O out.log -T timing.log -m classic
+
+# Append and flush immediately after writes
+./ft_script -a -f -O out.log
+
+# Return command exit code
+./ft_script -e -c "grep hello missing_file"
 ```
+
+### Notes
+
+- Only single flags are supported (`-a`, not grouped short options like `-abc`).
+- Designed mainly for interactive terminal sessions.
+- Full behavior details and limitations are available in `./ft_script -h`.
 
 ## 📄 License
 
